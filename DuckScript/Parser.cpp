@@ -1,5 +1,5 @@
 #include "Parser.h"
-#include "Keypress.h"
+#include <numeric>
 
 template <typename T>
 inline std::vector<T> split(T x, const char delim = ' ')
@@ -12,7 +12,7 @@ inline std::vector<T> split(T x, const char delim = ' ')
         if(x[i] == delim)
         {
             split.push_back(temp);
-            temp = "";
+			temp = "";
             i++;
         }
         temp += x[i];
@@ -43,36 +43,93 @@ void Parser::parse(const std::vector<std::string>& lines)
                 return;
 
             auto command = getCommand(words.at(0));
+            std::vector<std::string> args = std::vector<std::string>(words.begin() + 1, words.end());
+
             if(command.has_value()) {
                 switch(*command)
                 {
                     case Parser::COMMANDS::DELAY:
-                        if(words.size() != 2) {
+                    {
+                        if(args.size() == 0) {
                             throw std::runtime_error("ERROR: Expected one argument for DELAY");
                         }
 
-                        int delay = std::stoi(words.at(1));
+                        int delay = std::stoi(args.at(0));
                         Sleep(delay);
                         std::cout << "Sleeping for " << delay << std::endl;
                         break;
+                    }
+                    case Parser::COMMANDS::STRING:
+                    {
+                        if(words.size() != 2) {
+                            throw std::runtime_error("ERROR: Expected one argument for STRING");
+                        }
+
+                        std::string joinedArgs = std::accumulate(args.begin(), args.end(), std::string{});
+
+                        for(const char ch : joinedArgs)
+                        {
+                            const std::string curChar = static_cast<std::string>(&ch);
+
+                            auto curKey = getKey(curChar);
+                            if(!curKey.has_value())
+                                throw std::runtime_error("Unexpected token " + curChar + " where a key was expected");
+
+                            auto keypress = getKeypress(*curKey);
+                            if(!keypress.has_value())
+                                throw std::runtime_error("Unable to find a keystroke for " + ch);
+
+                            keypress->keystroke();
+                        }
+                    }
                 }
             } else {
                 auto key = getKey(words.at(0));
+                if(key.has_value()) {
+                    switch(*key)
+                    {
+                        case Parser::KEYS::GUI:
+                        {
+                            if(words.size() < 2)
+                                throw std::runtime_error("ERROR: Expected one or more arguments for GUI");
+                            
+                            std::vector<Keypress<int>> keys;
+                            for(auto& k : args)
+                            {
+                                auto curKey = getKey(k);
+                                if(!curKey.has_value())
+                                    throw std::runtime_error("Unexpected token " + k + " where a key was expected");
 
-                switch(*key)
-                {
-					case Parser::KEYS::GUI:
-						if(words.size() != 2) {
-							throw std::runtime_error("ERROR: Expected one argument for GUI");
-						}
+                                auto keypress = getKeypress(*curKey);
+                                if(!keypress.has_value())
+                                    throw std::runtime_error("Unable to find a keystroke for " + k);
 
-						keybd_event(VK_LWIN, 0, 0, 0);
-						keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
-						break;
-					case Parser::KEYS::ENTER:
-						keybd_event(VK_RETURN, 0, 0, 0);
-						keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0);
-						break;
+                                keys.emplace_back(*keypress);
+                            }
+                            
+                            auto gui = Parser::keypressLookup.at(Parser::KEYS::GUI);
+                            gui.press();
+                            for(Keypress<int>& k : keys)
+                            {
+                                k.press();
+                            }
+                            for(Keypress<int>& k : keys)
+                            {
+                                k.release();
+                            }
+                            gui.release();
+                            
+                            break;
+                        }
+                        default:
+                        {
+                            auto keypress = getKeypress(*key);
+                            if(!keypress.has_value())
+                                throw std::runtime_error("Unable to find a keystroke for " + words.at(0));
+
+                            keypress->keystroke();
+                        }
+                    }
                 }
             }
         }
@@ -95,6 +152,12 @@ std::optional<Parser::KEYS> Parser::getKey(const std::string& str)
 {
     auto it = keysLookup.find(str);
     return it == keysLookup.end() ? std::nullopt : std::make_optional(it->second);
+}
+
+std::optional<Keypress<int>> Parser::getKeypress(KEYS k)
+{
+    auto it = keypressLookup.find(k);
+    return it == keypressLookup.end() ? std::nullopt : std::make_optional(it->second);
 }
 
 std::optional<Parser::OPERATORS> Parser::getOperator(const std::string& str)
