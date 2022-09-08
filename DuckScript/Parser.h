@@ -138,7 +138,7 @@ class Parser
 			PAUSE, BREAK,
 			PRINTSCREEN,
 			MENU, APP,
-			F1, F2, F3, F4, F5, F6, F7, F8, F9, F0, F11, F12,
+			F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
 			UPARROW, DOWNARROW, LEFTARROW, RIGHTARROW,
 			PAGEUP, PAGEDOWN, HOME, END,
 			INSERT, DELETE, BACKSPACE,
@@ -243,7 +243,9 @@ class Parser
 			LESS,
 			GREATER,
 			FORWARD_SLASH,
-			QUESTION
+			BACK_SLASH,
+			QUESTION,
+			PIPE
 		};
 
 		enum struct ATTACKMODE_MODIFIERS
@@ -283,7 +285,7 @@ class Parser
 			{ "F7", KEYS::F7 },
 			{ "F8", KEYS::F8 },
 			{ "F9", KEYS::F9 },
-			{ "F0", KEYS::F0 },
+			{ "F0", KEYS::F10 },
 			{ "F11", KEYS::F11 },
 			{ "F12", KEYS::F12 },
 			{ "UPARROW", KEYS::UPARROW },
@@ -400,10 +402,13 @@ class Parser
 			{ "<", KEYS::LESS },
 			{ ">", KEYS::GREATER },
 			{ "/", KEYS::FORWARD_SLASH },
-			{ "?", KEYS::QUESTION }
+			{ "\\", KEYS::BACK_SLASH },
+			{ "?", KEYS::QUESTION },
+			{ " ", KEYS::SPACE },
+			{ "|", KEYS::PIPE }
 		};
 
-		const std::map<KEYS, Keypress<int>> keypressLookup
+		static inline const std::map<KEYS, Keypress<int>> keypressLookup
 		{
 			{ KEYS::ZERO, Keypress<int>(0x30) },
 			{ KEYS::ONE, Keypress<int>(0x31) },
@@ -478,11 +483,11 @@ class Parser
 			{ KEYS::AND, Keypress<int>(0x37, true) },
 			{ KEYS::ASTERISK, Keypress<int>(0x38, true) },
 			{ KEYS::LEFT_PARA, Keypress<int>(0x39, true) },
-			{ KEYS::RIGHT_PARA, Keypress<int>(0x40, true) },
+			{ KEYS::RIGHT_PARA, Keypress<int>(0x30, true) },
 			{ KEYS::HYPHEN, Keypress<int>(VK_OEM_MINUS) },
 			{ KEYS::UNDERSCORE, Keypress<int>(VK_OEM_MINUS, true) },
-			{ KEYS::PLUS, Keypress<int>(VK_OEM_PLUS) },
-			{ KEYS::EQUALS, Keypress<int>(VK_OEM_PLUS, true) },
+			{ KEYS::PLUS, Keypress<int>(VK_OEM_PLUS, true) },
+			{ KEYS::EQUALS, Keypress<int>(VK_OEM_PLUS) },
 			{ KEYS::BACKSPACE, Keypress<int>(VK_BACK) },
 			{ KEYS::SPACE, Keypress<int>(VK_SPACE) },
 			{ KEYS::UPARROW, Keypress<int>(VK_UP) },
@@ -492,7 +497,41 @@ class Parser
 			{ KEYS::GUI, Keypress<int>(VK_LWIN) },
 			{ KEYS::WINDOWS, Keypress<int>(VK_LWIN) },
 			{ KEYS::ENTER, Keypress<int>(VK_RETURN) },
-			{ KEYS::COMMA, Keypress<int>(VK_OEM_COMMA) }
+			{ KEYS::COMMA, Keypress<int>(VK_OEM_COMMA) },
+			{ KEYS::LESS, Keypress<int>(VK_OEM_COMMA, true) },
+			{ KEYS::SPACE, Keypress<int>(VK_SPACE) },
+			{ KEYS::APOSTROPHE, Keypress<int>(VK_OEM_7) },
+			{ KEYS::QUOTE, Keypress<int>(VK_OEM_7, true) },
+			{ KEYS::PERIOD, Keypress<int>(VK_OEM_PERIOD) },
+			{ KEYS::GREATER, Keypress<int>(VK_OEM_PERIOD, true) },
+			{ KEYS::FORWARD_SLASH, Keypress<int>(VK_OEM_2) },
+			{ KEYS::QUESTION, Keypress<int>(VK_OEM_2, true) },
+			{ KEYS::SEMICOLON, Keypress<int>(VK_OEM_1) },
+			{ KEYS::COLON, Keypress<int>(VK_OEM_1, true) },
+			{ KEYS::LEFT_BRACKET, Keypress<int>(VK_OEM_4) },
+			{ KEYS::RIGHT_BRACKET, Keypress<int>(VK_OEM_6) },
+			{ KEYS::LEFT_BRACE, Keypress<int>(VK_OEM_4, true) },
+			{ KEYS::RIGHT_BRACE, Keypress<int>(VK_OEM_6, true) },
+			{ KEYS::BACK_SLASH, Keypress<int>(VK_OEM_5) },
+			{ KEYS::PIPE, Keypress<int>(VK_OEM_5, true) },
+			{ KEYS::TAB, Keypress<int>(VK_TAB) },
+			{ KEYS::CAPSLOCK, Keypress<int>(VK_CAPITAL) },
+			{ KEYS::SHIFT, Keypress<int>(VK_SHIFT) },
+			{ KEYS::CTRL, Keypress<int>(VK_CONTROL) },
+			{ KEYS::ALT, Keypress<int>(VK_MENU) },
+			{ KEYS::ESCAPE, Keypress<int>(VK_ESCAPE) },
+			{ KEYS::F1, Keypress<int>(VK_F1) },
+			{ KEYS::F2, Keypress<int>(VK_F2) },
+			{ KEYS::F3, Keypress<int>(VK_F3) },
+			{ KEYS::F4, Keypress<int>(VK_F4) },
+			{ KEYS::F5, Keypress<int>(VK_F5) },
+			{ KEYS::F6, Keypress<int>(VK_F6) },
+			{ KEYS::F7, Keypress<int>(VK_F7) },
+			{ KEYS::F8, Keypress<int>(VK_F8) },
+			{ KEYS::F9, Keypress<int>(VK_F9) },
+			{ KEYS::F10, Keypress<int>(VK_F10) },
+			{ KEYS::F11, Keypress<int>(VK_F11) },
+			{ KEYS::F12, Keypress<int>(VK_F12) }
 		};
 	
 		static inline const Dictionary<std::string, COMMANDS> commandsLookup

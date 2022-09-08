@@ -1,5 +1,6 @@
 #include "Parser.h"
 #include <numeric>
+#include <sstream>
 
 template <typename T>
 inline std::vector<T> split(T x, const char delim = ' ')
@@ -59,18 +60,28 @@ void Parser::parse(const std::vector<std::string>& lines)
                         std::cout << "Sleeping for " << delay << std::endl;
                         break;
                     }
+                    case Parser::COMMANDS::STRINGLN:
                     case Parser::COMMANDS::STRING:
                     {
                         if(args.size() < 1) {
                             throw std::runtime_error("ERROR: Expected argument(s) for STRING");
                         }
 
-                        std::string joinedArgs = std::accumulate(args.begin(), args.end(), std::string{});
-
-                        for(const char ch : joinedArgs)
+                        std::stringstream ss;
+                        for(std::string e : args)
                         {
-                            const std::string curChar = static_cast<std::string>(&ch);
+							ss << e << " ";
+                        }
+                        ss.seekp(-1, std::ios_base::end);
+                        ss << '\0';
 
+                        for(auto ch : ss.str())
+                        {
+                            if(ch == '\0')
+                                break;
+							
+                            const std::string curChar = static_cast<std::string>(&ch);
+                            
                             auto curKey = getKey(curChar);
                             if(!curKey.has_value())
                                 throw std::runtime_error("Unexpected token " + curChar + " where a key was expected");
@@ -81,6 +92,8 @@ void Parser::parse(const std::vector<std::string>& lines)
 
                             keypress->keystroke();
                         }
+                        if(*command == Parser::COMMANDS::STRINGLN)
+                            getKeypress(Parser::KEYS::ENTER)->keystroke();
                     }
                 }
             } else {
@@ -90,7 +103,7 @@ void Parser::parse(const std::vector<std::string>& lines)
                     {
                         case Parser::KEYS::GUI:
                         {
-                            if(words.size() < 2)
+                            if(args.size() != 1)
                                 throw std::runtime_error("ERROR: Expected one or more arguments for GUI");
                             
                             std::vector<Keypress<int>> keys;

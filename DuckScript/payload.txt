@@ -2,5 +2,8 @@ GUI r
 DELAY 100
 STRING notepad
 ENTER
-DELAY 1000
-STRING hello! world,!
+DELAY 300
+STRINGLN hello, world! It's a "very nice" day outside today! I have $123456789.122
+STRINGLN How about you?
+STRINGLN Well, (yes)... I have had a good day... (() => { })(); <- that's an IIFE btw! :)
+STRINGLN Let's use some more characters: !@#$%^&*()_+[]{}\|/<>:"
