@@ -61,8 +61,8 @@ void Parser::parse(const std::vector<std::string>& lines)
                     }
                     case Parser::COMMANDS::STRING:
                     {
-                        if(words.size() != 2) {
-                            throw std::runtime_error("ERROR: Expected one argument for STRING");
+                        if(args.size() < 1) {
+                            throw std::runtime_error("ERROR: Expected argument(s) for STRING");
                         }
 
                         std::string joinedArgs = std::accumulate(args.begin(), args.end(), std::string{});

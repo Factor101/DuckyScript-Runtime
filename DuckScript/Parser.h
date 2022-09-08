@@ -491,7 +491,8 @@ class Parser
 			{ KEYS::RIGHTARROW, Keypress<int>(VK_RIGHT) },
 			{ KEYS::GUI, Keypress<int>(VK_LWIN) },
 			{ KEYS::WINDOWS, Keypress<int>(VK_LWIN) },
-			{ KEYS::ENTER, Keypress<int>(VK_RETURN) }
+			{ KEYS::ENTER, Keypress<int>(VK_RETURN) },
+			{ KEYS::COMMA, Keypress<int>(VK_OEM_COMMA) }
 		};
 	
 		static inline const Dictionary<std::string, COMMANDS> commandsLookup
