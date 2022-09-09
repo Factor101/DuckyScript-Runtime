@@ -5,17 +5,30 @@
 #include "Keypress.h"
 #include "Dictionary.h"
 #undef DELETE
+
+class ConstantBase
+{
+	public:
+	virtual ~ConstantBase() = 0;
+};
+inline ConstantBase::~ConstantBase() {};
+
 class Parser
 {
-	private:
-		template <typename T>
-		struct Var
-		{
-			private:
-				T value;
-				Var(T init) : value(init) {}
-		};
 	public:
+		template <typename T>
+		class Constant : public ConstantBase
+		{
+			public:
+				typedef T Type;
+				Type value;
+
+				explicit Constant(const Type & value) : value(value)
+				{};
+				Constant()
+				{};
+				
+		};
 		Parser();
 		void parse(const std::vector<std::string> & lines);
 
@@ -266,7 +279,7 @@ class Parser
 			SERIAL_RANDOM
 		};
 
-		const Dictionary<std::string, KEYS> keysLookup
+		static inline const Dictionary<std::string, KEYS> keysLookup
 		{
 			{ "INJECT_MOD", KEYS::INJECT_MOD },
 			{ "ENTER", KEYS::ENTER },
@@ -534,6 +547,15 @@ class Parser
 			{ KEYS::F12, Keypress<int>(VK_F12) }
 		};
 	
+		static inline const std::map<std::string, std::vector<std::string>> functions 
+		{};
+
+		static inline std::map<std::string, int> vars 
+		{};
+
+		static inline std::map<std::string, std::unique_ptr<ConstantBase>> constants
+		{};
+
 		static inline const Dictionary<std::string, COMMANDS> commandsLookup
 		{
 			{ "IF", COMMANDS::IF },

@@ -1,9 +1,9 @@
 #include "Parser.h"
-#include <numeric>
 #include <sstream>
+#include <regex>
 
 template <typename T>
-inline std::vector<T> split(T x, const char delim = ' ')
+inline std::vector<T> split(T x, const char delim = ' ', bool inclusive = false)
 {
     x += delim; //includes a delimiter at the end so last word is also read
     std::vector<T> split = {};
@@ -12,9 +12,24 @@ inline std::vector<T> split(T x, const char delim = ' ')
     {
         if(x[i] == delim)
         {
-            split.push_back(temp);
+            split.emplace_back(inclusive ? temp + delim : temp);
 			temp = "";
             i++;
+        }
+        temp += x[i];
+    }
+    return split;
+}
+
+std::vector<std::string> splitChars(const std::string& x)
+{
+    std::vector<std::string> split = {};
+    std::string temp = "";
+    for(unsigned int i = 0; i <= x.length(); i++)
+    {
+        if(temp != "") {
+            split.emplace_back(temp);
+            temp = "";
         }
         temp += x[i];
     }
@@ -40,55 +55,91 @@ void Parser::parse(const std::vector<std::string>& lines)
             curLine++;
             std::cout << line << std::endl;
             std::vector<std::string> words = split(line);
+
+            for(auto& e : words)
+            {
+                if(std::regex_match(e, std::regex(R"($\$[\w]+[0-9a-zA-Z\-_]^)"))) {
+                    std::cout << e << " matched!\n";
+                }
+            }
+            std::vector<std::string> wordsSpaced = split(line, ' ', true);
+
             if(words.size() == 0 || words.at(0) == "\n" || words.at(0) == "\r")
                 return;
 
             auto command = getCommand(words.at(0));
             std::vector<std::string> args = std::vector<std::string>(words.begin() + 1, words.end());
+            std::vector<std::string> argsSpaced = std::vector<std::string>(wordsSpaced.begin() + 1, wordsSpaced.end());
 
             if(command.has_value()) {
                 switch(*command)
                 {
                     case Parser::COMMANDS::DELAY:
                     {
-                        if(args.size() == 0) {
+                        if(args.size() == 0)
                             throw std::runtime_error("ERROR: Expected one argument for DELAY");
-                        }
+                        
 
                         int delay = std::stoi(args.at(0));
                         Sleep(delay);
                         std::cout << "Sleeping for " << delay << std::endl;
                         break;
                     }
+
+                    case Parser::COMMANDS::DEFINE:
+                    {
+                        if(args.size() != 2)
+                            throw std::runtime_error("ERROR: Expected two arguments for DEFINE");
+
+                        try {
+                            Parser::constants[args.at(0)].reset(new Parser::Constant<int>(std::stoi(argsSpaced.at(1))));
+                        } catch(std::exception ex) {
+                            Parser::constants[args.at(0)].reset(new Parser::Constant<std::string>(argsSpaced.at(1)));
+                        }
+
+                        break;
+                    }
+
+                    case Parser::COMMANDS::VAR:
+                    {
+                        if(args.size() != 2)
+                            throw std::runtime_error("ERROR: Expected two arguments for DEFINE");
+
+                        Parser::vars[args.at(0)] = std::stoi(args.at(1));
+
+                        break;
+                    }
+
                     case Parser::COMMANDS::STRINGLN:
                     case Parser::COMMANDS::STRING:
                     {
-                        if(args.size() < 1) {
+                        if(args.size() < 1)
                             throw std::runtime_error("ERROR: Expected argument(s) for STRING");
+                        
+                        if(args.size() == 1 && Parser::constants.contains(args.at(0))) {
+                            try {
+                                int value = dynamic_cast<Parser::Constant<int>&>(*Parser::constants[args.at(0)]).value;
+                                args.at(0) = std::to_string(value);
+                            } catch(std::exception ex) {
+                                std::string value = dynamic_cast<Parser::Constant<std::string>&>(*Parser::constants[args.at(0)]).value;
+                                args.at(0) = value;
+                            }
+                            
                         }
 
                         std::stringstream ss;
-                        for(std::string e : args)
-                        {
-							ss << e << " ";
-                        }
-                        ss.seekp(-1, std::ios_base::end);
-                        ss << '\0';
+                        for(std::string e : argsSpaced)
+                            ss << e;
 
-                        for(auto ch : ss.str())
+                        for(const auto& e : splitChars(ss.str()))
                         {
-                            if(ch == '\0')
-                                break;
-							
-                            const std::string curChar = static_cast<std::string>(&ch);
-                            
-                            auto curKey = getKey(curChar);
+                            auto curKey = getKey(e);
                             if(!curKey.has_value())
-                                throw std::runtime_error("Unexpected token " + curChar + " where a key was expected");
+                                throw std::runtime_error("Unexpected token " + e + " where a key was expected");
 
                             auto keypress = getKeypress(*curKey);
                             if(!keypress.has_value())
-                                throw std::runtime_error("Unable to find a keystroke for " + ch);
+                                throw std::runtime_error("Unable to find a keystroke for " + e);
 
                             keypress->keystroke();
                         }

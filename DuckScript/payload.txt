@@ -1,9 +1,26 @@
+DELAY 500
 GUI r
-DELAY 100
+DELAY 500
 STRING notepad
 ENTER
-DELAY 300
+DELAY 1200
 STRINGLN hello, world! It's a "very nice" day outside today! I have $123456789.122
 STRINGLN How about you?
 STRINGLN Well, (yes)... I have had a good day... (() => { })(); <- that's an IIFE btw! :)
 STRINGLN Let's use some more characters: !@#$%^&*()_+[]{}\|/<>:"
+
+$heck
+$heck_ONE_1_2_4
+
+DEFINE FOO bar
+DEFINE BAR 1234
+
+STRING Foo is
+STRING FOO
+ENTER
+STRING Bar is
+STRING BAR
+ENTER
+
+VAR $hecker_num = 1337
+STRINGLN omg hecker number: $hecker_num !!!
