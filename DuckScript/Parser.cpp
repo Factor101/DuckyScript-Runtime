@@ -2,10 +2,13 @@
 #include <sstream>
 #include <regex>
 
+//TODO: evaluation of DEFINED constants in STRING commands
+
 template <typename T>
 inline std::vector<T> split(T x, const char delim = ' ', bool inclusive = false)
 {
-    x += delim; //includes a delimiter at the end so last word is also read
+    //includes a delimiter at the end so last word is also read
+    x += delim; 
     std::vector<T> split = {};
     std::string temp = "";
     for(unsigned int i = 0; i < x.length(); i++)
@@ -19,6 +22,33 @@ inline std::vector<T> split(T x, const char delim = ' ', bool inclusive = false)
         temp += x[i];
     }
     return split;
+}
+
+// TODO: evaluate each expression
+std::string evaluateGroupings(std::string str) // unfinished
+{
+    std::regex innermostGroup(R"(\(([^()]*)\))");
+    std::cout << std::regex_search(str, innermostGroup);
+    while(std::regex_search(str, innermostGroup))
+    {
+        std::cout << str << std::endl;
+        std::smatch match;
+        std::string out;
+
+        while(std::regex_search(str, match, innermostGroup))
+        {
+            std::string expression = match.str(1);
+
+            out += match.prefix();
+            out += std::regex_replace(match[0].str(), innermostGroup, "_EVALUATED_");
+            str = match.suffix();
+        }
+        str = out + str;
+        out = "";
+    }
+
+    std::cout << str << std::endl;
+    return str;
 }
 
 std::vector<std::string> splitChars(const std::string& x)
@@ -39,12 +69,6 @@ std::vector<std::string> splitChars(const std::string& x)
 Parser::Parser()
 {
 }
-/**
-* DELAY 1000
-* GUI r
-* STRING notepad
-* ENTER
-*/
 
 void Parser::parse(const std::vector<std::string>& lines)
 {
@@ -52,14 +76,37 @@ void Parser::parse(const std::vector<std::string>& lines)
     try {
         for(const auto& line : lines)
         {
+            LINE:
             curLine++;
             std::cout << line << std::endl;
             std::vector<std::string> words = split(line);
 
-            for(auto& e : words)
+            for(auto it = words.begin(); it != words.end(); ++it)
             {
-                if(std::regex_match(e, std::regex(R"($\$[\w]+[0-9a-zA-Z\-_]^)"))) {
-                    std::cout << e << " matched!\n";
+                if(!std::regex_match(*it, std::regex(R"($\$[a-z]+[0-9a-z\-_]^)", std::regex_constants::ECMAScript | std::regex_constants::icase)))
+                    continue;
+
+                bool isFirst = it == words.begin();
+                std::cout << *it << " matched!\n";
+
+                if(isFirst && words.at(1) == "=") {
+                    auto reservedVar = getReservedVar(*it);
+                    if(reservedVar.has_value() && Parser::vars.contains(*it)) {
+                        try {
+                            //TODO: support $a = ($a + 1)
+                            Parser::vars[*it] = std::stoi(words.at(2));
+                        } catch(std::exception ex) {
+                            throw std::runtime_error("Variables may only be assigned to integer values");
+                        }
+                    } else {
+                        throw std::runtime_error("Identifier \"" + *it + "\" is undefined");
+                    }
+
+                    goto LINE;
+                } else if(Parser::vars.contains(*it))  {
+                    
+                } else {
+
                 }
             }
             std::vector<std::string> wordsSpaced = split(line, ' ', true);
@@ -103,7 +150,11 @@ void Parser::parse(const std::vector<std::string>& lines)
                     case Parser::COMMANDS::VAR:
                     {
                         if(args.size() != 2)
-                            throw std::runtime_error("ERROR: Expected two arguments for DEFINE");
+                            throw std::runtime_error("Expected two arguments for DEFINE");
+
+                        auto reservedVar = getReservedVar(args.at(1));
+                        if(reservedVar.has_value())
+                            throw std::runtime_error("Reserved variable \"" + args.at(1) + "\" may not be assigned using VAR");
 
                         Parser::vars[args.at(0)] = std::stoi(args.at(1));
 
@@ -222,6 +273,12 @@ std::optional<Keypress<int>> Parser::getKeypress(KEYS k)
 {
     auto it = keypressLookup.find(k);
     return it == keypressLookup.end() ? std::nullopt : std::make_optional(it->second);
+}
+
+std::optional<Parser::RESERVED_VARS> Parser::getReservedVar(const std::string& str)
+{
+    auto it = reservedVarsLookup.find(str);
+    return it == reservedVarsLookup.end() ? std::nullopt : std::make_optional(it->second);
 }
 
 std::optional<Parser::OPERATORS> Parser::getOperator(const std::string& str)

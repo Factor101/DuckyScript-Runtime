@@ -688,5 +688,6 @@ class Parser
 		std::optional<COMMANDS> getCommand(const std::string& str);
 		std::optional<OPERATORS> getOperator(const std::string& str);
 		std::optional<KEYS> getKey(const std::string& str);
-		std::optional<Keypress<int>> getKeypress(KEYS k);
+		std::optional<RESERVED_VARS> getReservedVar(const std::string& str);
+		std::optional<Keypress<int>> getKeypress(KEYS k);		
 };

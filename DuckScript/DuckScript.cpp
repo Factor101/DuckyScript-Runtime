@@ -6,6 +6,9 @@
 
 namespace fs = std::filesystem;
 
+// here only for testing, remove later
+std::string evaluateGroupings(std::string str);
+
 int main()
 {
     try {
@@ -27,5 +30,10 @@ int main()
         parser.parse(out);
     } catch(std::exception ex) {
 		std::cout << ex.what() << std::endl;
+        std::system("pause");
+        exit(-1);
     }
+    std::cout << "[x] Program Execution finished" << std::endl;
+    std::system("pause");
+    exit(0);
 }
